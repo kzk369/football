@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong>Disclaimer!</strong> Betting can destroy lives, bet responsibly. <a href="https://www.gambleaware.org/" target="_blank">Visit GambleAware</a> | <a href="https://www.gamstop.co.uk/" target="_blank">Visit GAMSTOP</a>
+
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <strong>Disclaimer!</strong> The predictions are based on mean historical data and may not be accurate. :D
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+  
+<div class="row">
+    <div class="col-md-6">
+        <div class="card" style="width: 50vw;">
+            <div class="card-header">
+                <h2>Team Selection</h2>
+            </div>
+            <div class="card-body">
+                <form action="" method="POST">
+                    <div class="mb-3">
+                        <label for="league" class="form-label">League</label>
+                        <select class="form-select" name="league" id="league-select" required>
+                            <option value="">Select League</option>
+                            {% for league in leagues %}
+                            <option value="{{ league }}" {% if league == "English Premier League" %}selected{% endif %}>{{ league }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div id="team-select-container" style="display: none;">
+                        <div class="mb-3">
+                            <label for="home_team" class="form-label">Home Team</label>
+                            <select class="form-select" name="home_team" id="home-team-select" required>
+                                <option value="">Select Home Team</option>
+                            </select>
+                        </div>
+                
+                        <div class="mb-3">
+                            <label for="away_team" class="form-label">Away Team</label>
+                            <select class="form-select" name="away_team" id="away-team-select" required>
+                                <option value="">Select Away Team</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    
+                    
+                </form>
+
+                <button id="generate" class="btn btn-primary">Generate Prediction</button>
+
+                <div class="mt-4" id="stats-container" style="display: none;">
+                    <div class="markdown">
+                        
+                    </div>
+                </div>
+                
+
+            </div>
+        </div>
+    </div>
+</div>
+<footer style="position: fixed; bottom: 0; right: 5px;">&copy;2025 Made with <3 by kzk369</footer>
+{% endblock %}
+{% block scripts %}
+<script>
+    const leagueSelect = document.getElementById("league-select");
+    const homeTeamSelect = document.getElementById("home-team-select");
+    const awayTeamSelect = document.getElementById("away-team-select");
+    const teamSelectContainer = document.getElementById("team-select-container");
+    const generateButton = document.getElementById("generate");
+    const statsContainer = document.getElementById("stats-container");
+    const statsDiv = document.querySelector("#stats-container .markdown");
+
+    async function updateTeamDropdowns() {
+        const league = leagueSelect.value;
+
+        if (league) {
+            try {
+                const response = await fetch("/get_teams", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ league: league })
+                });
+
+                const data = await response.json();
+                const teams = data.teams;
+
+                // Populate the team dropdowns
+                homeTeamSelect.innerHTML = `<option value="">Select Home Team</option>`;
+                awayTeamSelect.innerHTML = `<option value="">Select Away Team</option>`;
+                teams.forEach(team => {
+                    homeTeamSelect.innerHTML += `<option value="${team}">${team}</option>`;
+                    awayTeamSelect.innerHTML += `<option value="${team}">${team}</option>`;
+                });
+
+                teamSelectContainer.style.display = "block";
+            } catch (error) {
+                console.error('Error fetching teams:', error);
+            }
+        } else {
+            teamSelectContainer.style.display = "none";
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+        updateTeamDropdowns();
+    });
+
+    leagueSelect.addEventListener("change", async () => {
+        updateTeamDropdowns();
+    });
+
+    generateButton.addEventListener("click", async () => {
+        const homeTeam = homeTeamSelect.value;
+        const awayTeam = awayTeamSelect.value;
+        const league = leagueSelect.value;  // Make sure you get the league value from the select element
+
+        if (homeTeam && awayTeam && league) {
+            const response = await fetch("/get_stats", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ league: league, home_team: homeTeam, away_team: awayTeam })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const stats = data.stats;
+                const error = data.error;
+
+                if (error) {
+                    statsDiv.innerHTML = `<h3 style="color: red;">${error}</h3>`;
+                } else {
+                    // Render the stats (after converting from markdown to HTML if needed)
+                    statsDiv.innerHTML = `
+                    <h2>Predicted Match Statistics (Averages)</h2>
+                    <h3>Predictions for ${homeTeam} (Home) vs. ${awayTeam} (Away):</h3>
+                    <h4>Result Probabilities:</h4>
+                    <ul>
+                        <li><strong>${homeTeam} Win:</strong> ${stats.home_win_prob.toFixed(2)}%</li>
+                        <li><strong>${awayTeam} Win:</strong> ${stats.away_win_prob.toFixed(2)}%</li>
+                        <li><strong>Draw:</strong> ${stats.draw_prob.toFixed(2)}%</li>
+                        <li><strong>Both Teams to Score (BTTS) Probability:</strong> ${stats.btts_prob.toFixed(2)}%</li>
+                    </ul>
+                    <h4>Expected Goals:</h4>
+                    <ul>
+                        <li><strong>Expected Total Goals:</strong> ${stats.expected_total_goals.toFixed(2)}</li>
+                        <li><strong>${homeTeam} Expected Goals:</strong> ${stats.home_team_stats.expected_goals.toFixed(2)}</li>
+                        <li><strong>${awayTeam} Expected Goals:</strong> ${stats.away_team_stats.expected_goals.toFixed(2)}</li>
+                    </ul>
+                    <h4>Team Statistics Predictions:</h4>
+                    <ul>
+                        <li><strong>Expected Shots On Target:</strong></li>
+                        <li><strong>${homeTeam} expected shots on target:</strong> ${stats.home_team_stats.shots_on_target.toFixed(2)}</li>
+                        <li><strong>${awayTeam} expected shots on target:</strong> ${stats.away_team_stats.shots_on_target.toFixed(2)}</li>
+                        <br>
+                        <li><strong>Expected Total Corners:</strong> ${(stats.home_team_stats.corners + stats.away_team_stats.corners).toFixed(2)}</li>
+                        <li><strong>${homeTeam} expected corners:</strong> ${stats.home_team_stats.corners.toFixed(2)}</li>
+                        <li><strong>${awayTeam} expected corners:</strong> ${stats.away_team_stats.corners.toFixed(2)}</li>
+                        <br>
+                        <li><strong>Expected Total Cards:</strong> ${(stats.home_team_stats.cards + stats.away_team_stats.cards).toFixed(2)}</li>
+                        <li><strong>${homeTeam} expected cards:</strong> ${stats.home_team_stats.cards.toFixed(2)}</li>
+                        <li><strong>${awayTeam} expected cards:</strong> ${stats.away_team_stats.cards.toFixed(2)}</li>
+                    </ul>
+                `;
+                }
+                
+                
+
+                statsContainer.style.display = "block";  // Show the stats container
+            } else {
+                console.error("Error fetching stats:", response.statusText);
+            }
+        }
+    });
+
+</script>
+{% endblock %}
