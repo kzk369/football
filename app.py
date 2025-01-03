@@ -4,7 +4,6 @@ from datetime import datetime
 import pandas as pd
 import extract as ex
 import predict as pr
-import markdown
 
 app = Flask(__name__)
 
