@@ -118,7 +118,7 @@
     generateButton.addEventListener("click", async () => {
         const homeTeam = homeTeamSelect.value;
         const awayTeam = awayTeamSelect.value;
-        const league = leagueSelect.value;  // Make sure you get the league value from the select element
+        const league = leagueSelect.value;
 
         if (homeTeam && awayTeam && league) {
             const response = await fetch("/get_stats", {
@@ -137,10 +137,9 @@
                 if (error) {
                     statsDiv.innerHTML = `<h3 style="color: red;">${error}</h3>`;
                 } else {
-                    // Render the stats (after converting from markdown to HTML if needed)
                     statsDiv.innerHTML = `
                     <h2>Predicted Match Statistics (Averages)</h2>
-                    <h3>Predictions for ${homeTeam} (Home) vs. ${awayTeam} (Away):</h3>
+                    <h3>${homeTeam} (Home) vs. ${awayTeam} (Away):</h3>
                     <h4>Result Probabilities:</h4>
                     <ul>
                         <li><strong>${homeTeam} Win:</strong> ${stats.home_win_prob.toFixed(2)}%</li>
@@ -157,23 +156,20 @@
                     <h4>Team Statistics Predictions:</h4>
                     <ul>
                         <li><strong>Expected Shots On Target:</strong></li>
-                        <li><strong>${homeTeam} expected shots on target:</strong> ${stats.home_team_stats.shots_on_target.toFixed(2)}</li>
-                        <li><strong>${awayTeam} expected shots on target:</strong> ${stats.away_team_stats.shots_on_target.toFixed(2)}</li>
+                        <li><strong>${homeTeam} expected shots on target:</strong> ${stats.home_team_stats.expected_shots_on_target.toFixed(2)}</li>
+                        <li><strong>${awayTeam} expected shots on target:</strong> ${stats.away_team_stats.expected_shots_on_target.toFixed(2)}</li>
                         <br>
-                        <li><strong>Expected Total Corners:</strong> ${(stats.home_team_stats.corners + stats.away_team_stats.corners).toFixed(2)}</li>
-                        <li><strong>${homeTeam} expected corners:</strong> ${stats.home_team_stats.corners.toFixed(2)}</li>
-                        <li><strong>${awayTeam} expected corners:</strong> ${stats.away_team_stats.corners.toFixed(2)}</li>
+                        <li><strong>Expected Total Corners:</strong> ${(stats.home_team_stats.expected_corners + stats.away_team_stats.expected_corners).toFixed(2)}</li>
+                        <li><strong>${homeTeam} expected corners:</strong> ${stats.home_team_stats.expected_corners.toFixed(2)}</li>
+                        <li><strong>${awayTeam} expected corners:</strong> ${stats.away_team_stats.expected_corners.toFixed(2)}</li>
                         <br>
-                        <li><strong>Expected Total Cards:</strong> ${(stats.home_team_stats.cards + stats.away_team_stats.cards).toFixed(2)}</li>
-                        <li><strong>${homeTeam} expected cards:</strong> ${stats.home_team_stats.cards.toFixed(2)}</li>
-                        <li><strong>${awayTeam} expected cards:</strong> ${stats.away_team_stats.cards.toFixed(2)}</li>
+                        <li><strong>Expected Total Cards:</strong> ${(stats.home_team_stats.expected_cards + stats.away_team_stats.expected_cards).toFixed(2)}</li>
+                        <li><strong>${homeTeam} expected cards:</strong> ${stats.home_team_stats.expected_cards.toFixed(2)}</li>
+                        <li><strong>${awayTeam} expected cards:</strong> ${stats.away_team_stats.expected_cards.toFixed(2)}</li>
                     </ul>
                 `;
                 }
-                
-                
-
-                statsContainer.style.display = "block";  // Show the stats container
+                statsContainer.style.display = "block";
             } else {
                 console.error("Error fetching stats:", response.statusText);
             }

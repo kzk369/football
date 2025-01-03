@@ -9,7 +9,6 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    """Home page with prediction form"""
     leagues = ex.get_leagues()
     return render_template('index.html', leagues=leagues)
 
@@ -21,7 +20,6 @@ def get_teams():
 
 @app.route('/get_stats', methods=['POST'])
 def get_stats():
-    # Extract form data
     data = request.get_json()
     league = data.get('league')
     home_team = data.get('home_team')
@@ -32,11 +30,11 @@ def get_stats():
             return jsonify({"error": "GLORY GLORY MAN UNITED!"})
         return jsonify({"error": "Home and Away teams must be different!"})
 
-    stats = pr.get_stats(league, home_team, away_team)
-
-    # Perform operations with the form data
-    # Example: return a message with the submitted data
-    return jsonify({"stats": stats})
+    try:
+        stats = pr.get_stats(league, home_team, away_team)
+        return jsonify({"stats": stats})
+    except Exception as e:
+        return jsonify({"error": "Not enough data to make a prediction for recently promoted team(s)!"})
 
 if __name__ == '__main__':
     app.run(debug=True)
